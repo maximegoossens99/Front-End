@@ -20,11 +20,11 @@ game_styles = ['Counter-Attacking Prowess', 'High-Pressing Havoc', 'Defensive Fo
 #positions = ['centerback', 'fullback', 'midfielder', 'winger', 'striker']
 # Mapping of positions to their corresponding CSV files
 position_to_file = {
-    'centerback': 'centerbacks.csv',
-    'fullback': 'fullbacks.csv',
-    'midfielder': 'midfielders.csv',
-    'winger': 'wingers.csv',
-    'striker': 'strikers.csv'
+    'centerback': 'centerback.csv',
+    'fullback': 'fullback.csv',
+    'midfielder': 'midfielder.csv',
+    'winger': 'winger.csv',
+    'striker': 'striker.csv'
 }
 ages_min = list(range(15, 41))
 ages_max = list(range(15, 41))
@@ -77,7 +77,7 @@ if st.checkbox('Start player analysis'):
 
     'Player analysis done !'
 
-scaled_df_kmeans = pd.read_csv('raw_data/scaled_df_kmeans.to_csv')
+scaled_df_kmeans = pd.read_csv('raw_data/scaled_df_kmeans.csv')
 
 
 
