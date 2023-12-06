@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 
 # Load the dataset from the raw_data folder
 scaled_df_kmeans = pd.read_csv('raw_data/scaled_df_kmeans.to_csv')
-
+#chager peut être la taille des caractères pour avoir tout en lover ce qui faciite les recherches
 
 # Streamlit interface
 st.title('Football player profile analyse')
@@ -52,9 +52,6 @@ radar_features = ['shooting', 'dribbling_control', 'passing_vision',
                   'tackling_interception', 'aerial_defense', 'speed_agility',
                   'strength_stamina', 'decision_making', 'work_ethic_effort',
                   'leadership', 'teamwork']
-
-
-
 
 
 # Find and display closest players
