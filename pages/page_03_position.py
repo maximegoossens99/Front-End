@@ -3,11 +3,11 @@ import pandas as pd
 
 # Mapping of positions to their corresponding CSV files
 position_to_file = {
-    'centerback': 'centerbacks.csv',
-    'fullback': 'fullbacks.csv',
-    'midfielder': 'midfielders.csv',
-    'winger': 'wingers.csv',
-    'striker': 'strikers.csv'
+    'centerback': 'centerback.csv',
+    'fullback': 'fullback.csv',
+    'midfielder': 'midfielder.csv',
+    'winger': 'winger.csv',
+    'striker': 'striker.csv'
 }
 
 # User selects a position

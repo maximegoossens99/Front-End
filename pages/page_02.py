@@ -31,6 +31,8 @@ fullback_df = pd.read_csv('raw_data/fullback.csv')
 midfielder_df = pd.read_csv('raw_data/midfielder.csv')
 winger_df = pd.read_csv('raw_data/winger.csv')
 striker_df = pd.read_csv('raw_data/striker.csv')
+perfect_df = pd.read_csv('raw_data/final_df.csv')
+
 
 position_to_file = {
     'centerback': centerback_df,
@@ -154,6 +156,8 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
         #by='scaled_total_score' bPREVIOUS SORTING
         results.append(similar_players)
     final_result = pd.concat(results).sort_values(by='scaled_total_score', ascending=False)
+    st.write(perfect_df)
+    final_result = pd.merge(perfect_df, final_result, how='inner', left_on='name_y', right_on='name')
     st.write(final_result)
     return final_result
 
