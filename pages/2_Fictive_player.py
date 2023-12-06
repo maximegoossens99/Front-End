@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 import pandas as pd
+import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import plotly.graph_objects as go
 
@@ -77,3 +78,71 @@ if st.checkbox('Start player analysis'):
     'Player analysis done !'
 
 scaled_df_kmeans = pd.read_csv('raw_data/scaled_df_kmeans.to_csv')
+
+
+
+#-------------------------------------------------------------------------------
+def find_closest_players(position, team_1, team_2, num_neighbors):
+    def custom_scaler(dfgf_no_name):
+        total_score = dfgf_no_name.sum(axis=1)
+        scaled_dfgf_no_name = dfgf_no_name.div(total_score, axis=0)
+        total_score = scaler.transform(total_score.values.reshape(-1, 1)).flatten()
+        return total_score, scaled_dfgf_no_name
+    def compare_teams(df, team1, team2):
+        df1 = df.loc[team1]
+        df2 = df.loc[team2]
+        total_score, result = custom_scaler(pd.DataFrame(df1.subtract(df2)).T.drop(columns=['club_rating']))
+        result = result.clip(lower=0)
+        result['scaled_total_score'] = abs(total_score)
+        name = pd.DataFrame(data=["Nino_M"], columns=['name'])
+        result = name.join(result)
+        return result
+    # Specify the dimensions of the DataFrame
+    rows = 4
+    columns = 4
+    # Create a DataFrame filled with zeros
+    foots = pd.DataFrame(np.zeros((rows, columns)), columns=[f'col{i+1}' for i in range(columns)])
+    new_column_names = ['either_left', 'either_right', 'left', 'right']
+    foots.columns = new_column_names
+    # Set the diagonal elements to 1
+    np.fill_diagonal(foots.values, 1)
+    # Specify the dimensions of the DataFrame
+    rows = 6
+    columns = 6
+    # Create a DataFrame filled with zeros
+    positions = pd.DataFrame(np.zeros((rows, columns)), columns=[f'col{i+1}' for i in range(columns)])
+    new_column_names = ['centerback', 'fullback', 'midfielder', 'striker', 'winger']
+    positions.columns = new_column_names
+    # Set the diagonal elements to 1
+    np.fill_diagonal(positions.values, 1)
+    final_df = positions.join(foots, how='cross')
+    Nino = compare_teams(position, team_1, team_2)
+    Nino = Nino.join(final_df, how='cross')
+    series = pd.Series([f'Nino_M_{i}' for i in range(24)])
+    Nino.name = series
+    Nino = Nino[Nino.goalkeeper != 1]
+    Nino.drop(columns=['goalkeeper', 'goalkeeping_abilities'], inplace=True)
+    Nino.reset_index(inplace=True, drop=True)
+    data = Nino
+    #if player_name not in data['name'].values:
+    #r    return f"Player '{player_name}' not found in the dataset."
+    feature_columns = data.columns.drop('name')
+    results = []
+    for player_name in Nino.name:
+        # Extract the specified player's statistics
+        player_stats = data[data['name'] == player_name].drop(columns='name')
+        player_stats['label'] = km.predict(player_stats)
+        # Drop the 'label' column before fitting the model
+        player_stats = player_stats.drop(columns='label')
+        # Fit the NearestNeighbors model
+        nbrs = NearestNeighbors(n_neighbors=num_neighbors + 1).fit(scaled_df_kmeans[feature_columns])
+        # Find the nearest neighbors
+        distances, indices = nbrs.kneighbors(player_stats)
+        # Get the names of similar players
+        # Exclude the first one if it's the player themselves
+        similar_players_indices = indices.flatten()
+        similar_players = scaled_df_kmeans.iloc[similar_players_indices].sort_values(by='scaled_total_score',ascending=False)[['name', 'scaled_total_score']]
+        #by='scaled_total_score' bPREVIOUS SORTING
+        results.append(similar_players)
+    final_result = pd.concat(results).sort_values(by='scaled_total_score', ascending=False)
+    return final_result
