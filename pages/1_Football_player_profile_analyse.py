@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 #st.markdown(logo_affichage) # coder l'affichage du logo en fonction du club !
 
 # Load the dataset from the raw_data folder
-scaled_df_kmeans = pd.read_csv('raw_data/scaled_df_kmeans.to_csv')
+scaled_df_kmeans = pd.read_csv('raw_data/scaled_df_kmeans.csv')
 #chager peut être la taille des caractères pour avoir tout en lover ce qui faciite les recherches
 
 # Streamlit interface
