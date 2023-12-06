@@ -1,14 +1,39 @@
 import os
 import streamlit as st
+import pandas as pd
+
+# Title and Introduction
+st.markdown("""
+# Moneyball project applied to football
+## For companies and private customers
+- Dataframe size : + 170 000 players
+- Number of features : +15 features
+- *You can contact our secretary for any questions: **Maxime Goossens** [LinkedIn](https://be.linkedin.com/in/maximegoossens)*
+""")
+
+# Display Metrics
+col1, col2, col3 = st.columns(3)
+col1.metric("Clients in 2023", "75", "+33")
+col2.metric("Followers (insta)", "57K", "+47K")
+col3.metric("Salaire Maxime", "$15", "+4.87%")
 
 
-st.markdown("Now, the rest is up to you. Start creating your page.")
+
+# SLIDER DEMO
+#@st.cache
+#def get_slider_data():
+#    return pd.DataFrame({'Age of the player': list(range(15, 40))})
+#
+#df_slider = get_slider_data()
+#option = st.slider('Select the player age', 15, 40)
 
 
-# TODO: Add some titles, introduction, ...
 
 
-# TODO: Request user input
+
+
+
+
 
 
 # TODO: Call the API using the user's input
