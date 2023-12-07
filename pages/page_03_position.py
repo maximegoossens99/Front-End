@@ -33,20 +33,25 @@ position_to_file = {
 ages_min = list(range(15, 41))
 ages_max = list(range(15, 41))
 
-col1, col2, col3 = st.columns(3)
+col1, col2 , col3= st.columns(3)
 
 with col1:
-    option0_club_name1 = st.text_input('Your club name:', 'Club Brugge')
-    option1_game_style = st.selectbox('Select a game style', game_styles)
-    option3_ages_min = st.selectbox('Select the player minimum age', ages_min)
+    option0_club_name1 = st.text_input('Club name:', 'Club Brugge')
+    option3_ages_min = st.selectbox('Minimum age', ages_min)
+    
+    option5_market_value = st.number_input('Market value')
+
 
 with col2:
-    option0_club_name2 = st.text_input('Club playing style:', 'Man City')  # To be removed later
-    option2_selected_position = st.selectbox('Select a position', options=list(position_to_file.keys()))
-    option4_ages_max = st.selectbox('Select the player maximum age', ages_max)
+    #option0_club_name2 = st.text_input('Club playing style:', 'Man City')  # To be removed later
+    option1_game_style = st.selectbox('Game style', game_styles)
+    option4_ages_max = st.selectbox('Maximum age', ages_max)
+
+    option6_expected_market_value = st.number_input('Expected market value')
 
 with col3:
-    option5_market_value = st.number_input('Select market value')
-    option6_expected_market_value = st.number_input('Select expected market value')
+    option2_selected_position = st.selectbox('Position', options=list(position_to_file.keys()))
+
+
 
 # ... (the rest of your code)
