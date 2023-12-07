@@ -9,7 +9,7 @@ import joblib
 scaler = joblib.load('models/minmax_scaler.joblib')
 km = joblib.load('models/knn_model.joblib')
 nbrs = joblib.load('models/nearest_neighbors_model.joblib')
-scaled_df_kmeans = pd.read_csv('raw_data/scaled_df_kmeans.csv')
+scaled_df_kmeans = pd.read_csv('raw_data/scaled_df.csv')
 
 
 st.title('Football Fictive Player Processing')
@@ -105,7 +105,6 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
         result['scaled_total_score'] = abs(total_score)
         name = pd.DataFrame(data=["Nino_M"], columns=['name'])
         result = name.join(result)
-        st.write(result) # to remove
         #return result
         return result
     # Specify the dimensions of the DataFrame
@@ -128,19 +127,18 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
     np.fill_diagonal(positions.values, 1)
     final_df = positions.join(foots, how='cross')
     Nino = compare_teams(position, team_1, team_2)
-    Nino = Nino.join(final_df, how='cross')
+    Ninos = Nino.join(final_df, how='cross')
     series = pd.Series([f'Nino_M_{i}' for i in range(24)])
-    Nino.name = series
-    Nino = Nino[Nino.goalkeepers != 1]
-    st.write(Nino)
-    Nino.drop(columns=['goalkeepers', 'goalkeeping_abilities'], inplace=True)
-    Nino.reset_index(inplace=True, drop=True)
-    data = Nino
+    Ninos.name = series
+    Ninos = Ninos[Ninos.goalkeepers != 1]
+    Ninos.drop(columns=['goalkeepers', 'goalkeeping_abilities'], inplace=True)
+    Ninos.reset_index(inplace=True, drop=True)
+    data = Ninos
     #if player_name not in data['name'].values:
     #r    return f"Player '{player_name}' not found in the dataset."
     feature_columns = data.columns.drop('name')
     results = []
-    for player_name in Nino.name:
+    for player_name in Ninos.name:
         # Extract the specified player's statistics
         player_stats = data[data['name'] == player_name].drop(columns='name')
         player_stats['label'] = km.predict(player_stats)
@@ -152,35 +150,62 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
         # Get the names of similar players
         # Exclude the first one if it's the player themselves
         similar_players_indices = indices.flatten()
-        similar_players = scaled_df_kmeans.iloc[similar_players_indices].sort_values(by='scaled_total_score',ascending=False)[['name', 'scaled_total_score']]
+        similar_players = scaled_df_kmeans.iloc[similar_players_indices].sort_values(by='scaled_total_score',ascending=False)
         #by='scaled_total_score' bPREVIOUS SORTING
         results.append(similar_players)
     final_result = pd.concat(results).sort_values(by='scaled_total_score', ascending=False)
-    st.write(perfect_df)
-    final_result = pd.merge(perfect_df, final_result, how='inner', left_on='name_y', right_on='name')
-    st.write(final_result)
-    return final_result
+    final_result = pd.merge(perfect_df, final_result, left_index=True, right_index=True, how='inner')
+    return Nino.drop(columns=['name']), final_result
 
+# Define the subset of features for the radar chart
+radar_features = ['shooting', 'dribbling_control', 'passing_vision',
+                  'tackling_interception', 'aerial_defense', 'speed_agility',
+                  'strength_stamina', 'decision_making', 'work_ethic_effort',
+                  'leadership', 'teamwork']
 
 # Trigger analysis based on user input
 if st.checkbox('Start player analysis'):
     # Loading animation code
     with st.spinner('Performing analysis...'):
         # Call your find_closest_players function
-        closest_players_result = find_closest_players(position_to_file[option2_selected_position], option0_club_name1, option0_club_name2, 5)
+        player_stats, closest_players_result = find_closest_players(position_to_file[option2_selected_position], option0_club_name1, option0_club_name2, 5)
 
-        # Display the results using Plotly graphs
-        for index, row in closest_players_result.iterrows():
-            fig = go.Figure()
+    # Player's own stats for radar features
 
-            # Example Plotly graph - replace with your actual graph code
-            fig.add_trace(go.Bar(x=['Player', 'Score'], y=[row['Player'], row['Score']]))
+    # Create and display radar charts
+    for i, (index, row) in enumerate(closest_players_result[:5].iterrows()):
 
-            st.plotly_chart(fig)
+        fig = go.Figure()
 
-            # Limit to 5 graphs
-            if index >= 4:
-                break
+        # Add trace for the input player
+        fig.add_trace(go.Scatterpolar(
+            r=player_stats.values,
+            theta=radar_features,
+            fill='toself',
+            name='Nino Meessen'
+        ))
+
+        # Add trace for the closest player
+        fig.add_trace(go.Scatterpolar(
+            r=row[radar_features].values,
+            theta=radar_features,
+            fill='toself',
+            name=row['name']
+        ))
+
+        # Update layout
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True
+                )),
+            showlegend=True,
+            title=f"Comparison: {'Nino Meessen'} vs {row['name']}"
+        )
+
+        # Show the plot
+        st.plotly_chart(fig, use_container_width=False, sharing="streamlit", theme="streamlit")
+
 
     st.success('Player analysis done!')
 
