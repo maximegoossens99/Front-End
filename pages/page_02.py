@@ -5,6 +5,32 @@ import plotly.graph_objects as go
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import joblib
+from streamlit.components.v1 import html
+
+def nav_page(page_name, timeout_secs=3):
+    nav_script = """
+        <script type="text/javascript">
+            function attempt_nav_page(page_name, start_time, timeout_secs) {
+                var links = window.parent.document.getElementsByTagName("a");
+                for (var i = 0; i < links.length; i++) {
+                    if (links[i].href.toLowerCase().endsWith("/" + page_name.toLowerCase())) {
+                        links[i].click();
+                        return;
+                    }
+                }
+                var elasped = new Date() - start_time;
+                if (elasped < timeout_secs * 1000) {
+                    setTimeout(attempt_nav_page, 100, page_name, start_time, timeout_secs);
+                } else {
+                    alert("Unable to navigate to page '" + page_name + "' after " + timeout_secs + " second(s).");
+                }
+            }
+            window.addEventListener("load", function() {
+                attempt_nav_page("%s", new Date(), %d);
+            });
+        </script>
+    """ % (page_name, timeout_secs)
+    html(nav_script)
 
 scaler = joblib.load('models/minmax_scaler.joblib')
 km = joblib.load('models/knn_model.joblib')
@@ -21,9 +47,12 @@ st.markdown("""
 """)
 
 # Define your game styles, positions, and age ranges
-game_styles = ['Counter-Attacking Prowess', 'High-Pressing Havoc', 'Defensive Fortress',
-               'Wing Dominance', 'Possession with Purpose', 'Youthful Energy and High Intensity',
-               'Midfield Maestros']
+#game_styles = ['Counter-Attacking Prowess', 'High-Pressing Havoc', 'Defensive Fortress',
+#               'Wing Dominance', 'Possession with Purpose', 'Youthful Energy and High Intensity',
+#               'Midfield Maestros']
+game_styles = {'Counter-Attacking Prowess': 'Man City', 'High-Pressing Havoc': 'Liverpool', 'Defensive Fortress': 'Tottenham',
+               'Wing Dominance': 'FC Bayarn', 'Possession with Purpose': 'Barcelona', 'Youthful Energy and High Intensity': 'Liverpool',
+               'Midfield Maestros': 'Man City'}
 
 # Mapping of positions to their corresponding CSV files
 centerback_df = pd.read_csv('raw_data/centerback.csv')
@@ -55,8 +84,8 @@ with col1:
 
 
 with col2:
-    option0_club_name2 = st.text_input('Club playing style:', 'Man City')  # To be removed later
-    option1_game_style = st.selectbox('Game style', game_styles)
+    #option0_club_name2 = st.text_input('Club playing style:', 'Man City')  # To be removed later
+    option1_game_style = st.selectbox('Game style', options=list(game_styles.keys()))
     option4_ages_max = st.selectbox('Maximum age', ages_max)
 
     option6_expected_market_value = st.number_input('Expected market value')
@@ -74,8 +103,9 @@ filtered_df = pd.DataFrame({
     'Expected market value': [option6_expected_market_value]
 })
 
-st.write('Player parameters:')
-st.write(filtered_df)
+#st.write('Player parameters:')
+#st.write(filtered_df)
+
 
 
 # NOTES ET MODIFICATIONS A APPORTER AU CODE !
@@ -162,6 +192,11 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
     final_result = pd.concat(results).sort_values(by='scaled_total_score', ascending=False)
     final_result = pd.merge(perfect_df, final_result, left_index=True, right_index=True, how='inner')
     final_result = final_result[final_result[f'{option2_selected_position}_x']== 1]
+    final_result = final_result[final_result['current_age'] > option3_ages_min]
+    final_result = final_result[final_result['current_age'] < option4_ages_max]
+    final_result = final_result[final_result['value'] <= option5_market_value]
+
+
     return Nino.drop(columns=['name']), final_result
 
 # Define the subset of features for the radar chart
@@ -175,7 +210,12 @@ if st.checkbox('Start player analysis'):
     # Loading animation code
     with st.spinner('Performing analysis...'):
         # Call your find_closest_players function
-        player_stats, closest_players_result = find_closest_players(position_to_file[option2_selected_position], option0_club_name1, option0_club_name2, 5)
+        player_stats, closest_players_result = find_closest_players(
+            position_to_file[option2_selected_position],
+            option0_club_name1,
+            game_styles[option1_game_style],
+            5)
+
 
     # Player's own stats for radar features
 
@@ -213,6 +253,10 @@ if st.checkbox('Start player analysis'):
 
         # Show the plot
         st.plotly_chart(fig, use_container_width=False, sharing="streamlit", theme="streamlit")
+
+        # Add button for each player/chart
+        if st.button(f"Choose: {row['name']}"):
+            nav_page("player_details_05")
 
 
 
