@@ -38,7 +38,7 @@ col1, col2 , col3= st.columns(3)
 with col1:
     option0_club_name1 = st.text_input('Club name:', 'Club Brugge')
     option3_ages_min = st.selectbox('Minimum age', ages_min)
-    
+
     option5_market_value = st.number_input('Market value')
 
 
@@ -55,3 +55,5 @@ with col3:
 
 
 # ... (the rest of your code)
+
+st.image("https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd3NwZmhocnJleGt1dnBiY2R2YjIyN3E3ZHZuMHdnemFkZzBhcGx2ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0EoBPIfQafOYpwJy/giphy.gif", use_column_width="always")
