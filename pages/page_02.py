@@ -5,6 +5,32 @@ import plotly.graph_objects as go
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import joblib
+from streamlit.components.v1 import html
+
+def nav_page(page_name, timeout_secs=3):
+    nav_script = """
+        <script type="text/javascript">
+            function attempt_nav_page(page_name, start_time, timeout_secs) {
+                var links = window.parent.document.getElementsByTagName("a");
+                for (var i = 0; i < links.length; i++) {
+                    if (links[i].href.toLowerCase().endsWith("/" + page_name.toLowerCase())) {
+                        links[i].click();
+                        return;
+                    }
+                }
+                var elasped = new Date() - start_time;
+                if (elasped < timeout_secs * 1000) {
+                    setTimeout(attempt_nav_page, 100, page_name, start_time, timeout_secs);
+                } else {
+                    alert("Unable to navigate to page '" + page_name + "' after " + timeout_secs + " second(s).");
+                }
+            }
+            window.addEventListener("load", function() {
+                attempt_nav_page("%s", new Date(), %d);
+            });
+        </script>
+    """ % (page_name, timeout_secs)
+    html(nav_script)
 
 scaler = joblib.load('models/minmax_scaler.joblib')
 km = joblib.load('models/knn_model.joblib')
@@ -21,9 +47,12 @@ st.markdown("""
 """)
 
 # Define your game styles, positions, and age ranges
-game_styles = ['Counter-Attacking Prowess', 'High-Pressing Havoc', 'Defensive Fortress',
-               'Wing Dominance', 'Possession with Purpose', 'Youthful Energy and High Intensity',
-               'Midfield Maestros']
+#game_styles = ['Counter-Attacking Prowess', 'High-Pressing Havoc', 'Defensive Fortress',
+#               'Wing Dominance', 'Possession with Purpose', 'Youthful Energy and High Intensity',
+#               'Midfield Maestros']
+game_styles = {'Counter-Attacking Prowess': 'Man City', 'High-Pressing Havoc': 'Liverpool', 'Defensive Fortress': 'Tottenham',
+               'Wing Dominance': 'FC Bayarn', 'Possession with Purpose': 'Barcelona', 'Youthful Energy and High Intensity': 'Liverpool',
+               'Midfield Maestros': 'Man City'}
 
 # Mapping of positions to their corresponding CSV files
 centerback_df = pd.read_csv('raw_data/centerback.csv')
@@ -45,18 +74,24 @@ position_to_file = {
 ages_min = list(range(15, 41))
 ages_max = list(range(15, 41))
 
-# Streamlit input widgets
-option0_club_name1 = st.text_input('Your club name:', 'Club Brugge')
-option0_club_name2 = st.text_input('Club playing style :', 'Man City') # A supprimer plus tard
+col1, col2 , col3= st.columns(3)
 
-option1_game_style = st.selectbox('Select a game style', game_styles)
-option2_selected_position = st.selectbox('Select a position', options=list(position_to_file.keys()))
+with col1:
+    option0_club_name1 = st.text_input('Club name:', 'Club Brugge')
+    option3_ages_min = st.selectbox('Minimum age', ages_min)
+
+    option5_market_value = st.number_input('Market value')
 
 
-option3_ages_min = st.selectbox('Select the player minimum age', ages_min)
-option4_ages_max = st.selectbox('Select the player maximum age', ages_max)
-option5_market_value = st.number_input('Select market value')
-option6_expected_market_value = st.number_input('Select expected market value')
+with col2:
+    #option0_club_name2 = st.text_input('Club playing style:', 'Man City')  # To be removed later
+    option1_game_style = st.selectbox('Game style', options=list(game_styles.keys()))
+    option4_ages_max = st.selectbox('Maximum age', ages_max)
+
+    option6_expected_market_value = st.number_input('Expected market value')
+
+with col3:
+    option2_selected_position = st.selectbox('Position', options=list(position_to_file.keys()))
 
 # Display the selected parameters
 filtered_df = pd.DataFrame({
@@ -68,8 +103,9 @@ filtered_df = pd.DataFrame({
     'Expected market value': [option6_expected_market_value]
 })
 
-st.write('Player parameters:')
-st.write(filtered_df)
+#st.write('Player parameters:')
+#st.write(filtered_df)
+
 
 
 # NOTES ET MODIFICATIONS A APPORTER AU CODE !
@@ -101,7 +137,7 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
         subtracted_df = df2.sub(df1, fill_value=0)
         row_sums = subtracted_df.sum(axis=0)
         total_score, result = custom_scaler(pd.DataFrame(row_sums).T.drop(columns=['club_rating']))
-        result = result.clip(lower=0)
+        result = result.clip(lower=0.06, upper=0.11)
         result['scaled_total_score'] = abs(total_score)
         name = pd.DataFrame(data=["Nino_M"], columns=['name'])
         result = name.join(result)
@@ -155,6 +191,12 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
         results.append(similar_players)
     final_result = pd.concat(results).sort_values(by='scaled_total_score', ascending=False)
     final_result = pd.merge(perfect_df, final_result, left_index=True, right_index=True, how='inner')
+    final_result = final_result[final_result[f'{option2_selected_position}_x']== 1]
+    final_result = final_result[final_result['current_age'] > option3_ages_min]
+    final_result = final_result[final_result['current_age'] < option4_ages_max]
+    final_result = final_result[final_result['value'] <= option5_market_value]
+
+
     return Nino.drop(columns=['name']), final_result
 
 # Define the subset of features for the radar chart
@@ -168,9 +210,15 @@ if st.checkbox('Start player analysis'):
     # Loading animation code
     with st.spinner('Performing analysis...'):
         # Call your find_closest_players function
-        player_stats, closest_players_result = find_closest_players(position_to_file[option2_selected_position], option0_club_name1, option0_club_name2, 5)
+        player_stats, closest_players_result = find_closest_players(
+            position_to_file[option2_selected_position],
+            option0_club_name1,
+            game_styles[option1_game_style],
+            5)
+
 
     # Player's own stats for radar features
+
 
     # Create and display radar charts
     for i, (index, row) in enumerate(closest_players_result[:5].iterrows()):
@@ -179,7 +227,7 @@ if st.checkbox('Start player analysis'):
 
         # Add trace for the input player
         fig.add_trace(go.Scatterpolar(
-            r=player_stats.values,
+            r=player_stats.loc[0].values,
             theta=radar_features,
             fill='toself',
             name='Nino Meessen'
@@ -206,28 +254,36 @@ if st.checkbox('Start player analysis'):
         # Show the plot
         st.plotly_chart(fig, use_container_width=False, sharing="streamlit", theme="streamlit")
 
+        # Add button for each player/chart
+        if st.button(f"Choose: {row['name']}"):
+            nav_page("player_details_05")
+
+
 
     st.success('Player analysis done!')
 
-
 if st.checkbox('Show Details of Selected Players'):
     if 'closest_players_result' in locals():
+        st.markdown("""**Nearest neighbors to the fictive player's statistics**""")
         st.write(closest_players_result)
+        st.markdown("""**Fictive player's statistics**""")
+        st.write(player_stats)
+
+
     else:
         st.warning("Please run the analysis first to see details.")
 
 # Allow users to download the results as CSV
-if st.checkbox('Download Results as CSV'):
-    if 'closest_players_result' in locals():
-        csv = closest_players_result.to_csv(index=False)
-        st.download_button(
-            label="Download data as CSV",
-            data=csv,
-            file_name='closest_players.csv',
-            mime='text/csv',
-        )
-    else:
-        st.warning("Please run the analysis first to download the data.")
+
+if 'closest_players_result' in locals():
+    csv = closest_players_result.to_csv(index=False)
+    st.download_button(
+        label="Download data as CSV",
+        data=csv,
+        file_name='closest_players.csv',
+        mime='text/csv',
+    )
+
 
 # About section
 st.markdown("""
