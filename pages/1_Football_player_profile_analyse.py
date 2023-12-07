@@ -4,6 +4,14 @@ import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 import plotly.graph_objects as go
 
+#st.markdown("""
+#<style>
+#    [data-testid=stSidebar] {
+#        background-color: #ff000050;
+#    }
+#</style>
+#""", unsafe_allow_html=True)
+
 #Club logo IMAGE
 #st.write('This is page 1')
 #logo_affichage = ("![Foo](https://tmssl.akamaized.net/images/wappen/small/281.png?lm=1467356331)")
@@ -64,8 +72,7 @@ if st.button('Find Closest Players'):
 
     # Create and display radar charts, skipping the first player
     for i, (index, row) in enumerate(closest_players.iterrows()):
-        if i == 0:  # Skip the first player's chart
-            continue
+
 
         fig = go.Figure()
 

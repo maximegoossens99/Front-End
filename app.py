@@ -2,9 +2,17 @@ import os
 import streamlit as st
 import pandas as pd
 
+#st.markdown("""
+#<style>
+#    [data-testid=stSidebar] {
+#        background-color: #ff000050;
+#    }
+#</style>
+#""", unsafe_allow_html=True)
+
 # Title and Introduction
 st.markdown("""
-# Moneyball project applied to football
+# Moneyball project applied to football ⚽️
 ## For companies and private customers
 - Dataframe size : + 170 000 players
 - Number of features : +15 features
