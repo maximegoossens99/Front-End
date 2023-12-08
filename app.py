@@ -75,7 +75,6 @@ for i, collaborator in enumerate(collaborators):
             channels="RGB",
             output_format="JPEG",
         )
-        st.write(f"Thank you, {collaborator['name']}!")
 
 # Additional content and messages can be added here
 
