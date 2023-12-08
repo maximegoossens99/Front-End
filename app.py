@@ -35,6 +35,49 @@ st.image('raw_data/Moneyball.png')
 #df_slider = get_slider_data()
 #option = st.slider('Select the player age', 15, 40)
 
+# List of collaborators and their photos
+collaborators = [
+    {"name": "Jules", "photo_path": "raw_data/Jules.jpeg"},
+    {"name": "Yann", "photo_path": "raw_data/Yann.jpeg"},
+    {"name": "Michiel", "photo_path": "raw_data/Michiel.jpeg"},
+]
+
+# List of collaborators and their photos
+collaborators = [
+    {"name": "Jules", "photo_path": "raw_data/Jules.jpeg"},
+    {"name": "Yann", "photo_path": "raw_data/Yann.jpeg"},
+    {"name": "Michiel", "photo_path": "raw_data/Michiel.jpeg"},
+]
+
+# Thank-you message
+st.write("## Thank You to Our Collaborators!")
+st.write("We appreciate the contributions of the following individuals:")
+
+# Display photos in three columns
+col1, col2, col3 = st.columns(3)
+
+for i, collaborator in enumerate(collaborators):
+    # Calculate the appropriate column based on the index
+    if i % 3 == 0:
+        current_col = col1
+    elif i % 3 == 1:
+        current_col = col2
+    else:
+        current_col = col3
+
+    # Display the collaborator's photo and thank-you message in the current column
+    with current_col:
+        st.image(
+            collaborator["photo_path"],
+            caption=collaborator["name"],
+            width=150,
+            use_column_width="auto",
+            channels="RGB",
+            output_format="JPEG",
+        )
+        st.write(f"Thank you, {collaborator['name']}!")
+
+# Additional content and messages can be added here
 
 
 
