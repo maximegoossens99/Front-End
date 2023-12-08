@@ -26,7 +26,7 @@ col2.metric("Followers (insta)", "57K", "+47K")
 col3.metric("Salaire Maxime", "$15", "+4.87%")
 
 
-
+st.image('raw_data/Moneyball.png')
 # SLIDER DEMO
 #@st.cache
 #def get_slider_data():
