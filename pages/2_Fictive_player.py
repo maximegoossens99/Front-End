@@ -15,6 +15,10 @@ from streamlit.components.v1 import html
 #</style>
 #""", unsafe_allow_html=True)
 
+# Initialize session state
+if 'input_values' not in st.session_state:
+    st.session_state.input_values = {}
+
 def nav_page(page_name, timeout_secs=3):
     nav_script = """
         <script type="text/javascript">
@@ -88,7 +92,7 @@ with col1:
     option0_club_name1 = st.text_input('Club name:', '')
     option3_ages_min = st.selectbox('Minimum age', ages_min)
 
-    option5_market_value = st.number_input('Market value')
+    option5_market_value = st.number_input('Market value', step=1_000_000)
 
 
 with col2:
@@ -190,24 +194,33 @@ def find_closest_players(position, team_1, team_2, num_neighbors):
         # player_stats = player_stats.drop(columns='label')
         # Fit the NearestNeighbors model
         # Find the nearest neighbors
-        distances, indices = nbrs.kneighbors(player_stats)
+        distances, indices = nbrs.kneighbors(player_stats, n_neighbors= num_neighbors)
         # Get the names of similar players
         # Exclude the first one if it's the player themselves
         similar_players_indices = indices.flatten()
-        similar_players = scaled_df_kmeans.iloc[similar_players_indices].sort_values(by='scaled_total_score',ascending=False)
+        similar_players_distances = distances.flatten()
+        similar_players = scaled_df_kmeans.iloc[similar_players_indices]
+        similar_players['distance'] = similar_players_distances
+        # Sort by distance in ascending order (closer first)
+        similar_players = similar_players.sort_values(by='distance', ascending=True)
+
         #by='scaled_total_score' bPREVIOUS SORTING
         results.append(similar_players)
-    final_result = pd.concat(results).sort_values(by='scaled_total_score', ascending=False)
+    final_result = pd.concat(results)
     final_result = pd.merge(perfect_df, final_result, left_index=True, right_index=True, how='inner')
-    final_result = final_result[final_result[f'{option2_selected_position}_x']== 1]
     final_result = final_result[final_result['current_age'] > option3_ages_min]
     final_result = final_result[final_result['current_age'] < option4_ages_max]
     final_result = final_result[final_result['value'] <= option5_market_value]
+    surprise_du_chef = final_result
+    surprise_du_chef = surprise_du_chef[surprise_du_chef[f'{option2_selected_position}_x'] != 1]
+    surprise_du_chef = surprise_du_chef[surprise_du_chef['goalkeeper'] != 1]
+    surprise_du_chef = surprise_du_chef[surprise_du_chef['value'] > 500_000]
+    final_result = final_result[final_result[f'{option2_selected_position}_x']== 1]
 
     #final_result = final_result[final_result['xmv'] <= option6_expected_market_value]
 
 
-    return Nino.drop(columns=['name']), final_result
+    return Nino.drop(columns=['name']), final_result.sort_values(by='scaled_total_score', ascending=False), surprise_du_chef.sort_values(by='scaled_total_score', ascending=True).drop_duplicates()
 
 # Define the subset of features for the radar chart
 radar_features = ['shooting', 'dribbling_control', 'passing_vision',
@@ -215,23 +228,26 @@ radar_features = ['shooting', 'dribbling_control', 'passing_vision',
                   'strength_stamina', 'decision_making', 'work_ethic_effort',
                   'leadership', 'teamwork']
 
+
 # Trigger analysis based on user input
 if st.checkbox('Start player analysis'):
     # Loading animation code
     with st.spinner('Performing analysis...'):
         # Call your find_closest_players function
-        player_stats, closest_players_result = find_closest_players(
+        player_stats, closest_players_result, pepite = find_closest_players(
             position_to_file[option2_selected_position],
             option0_club_name1,
             game_styles[option1_game_style],
-            5)
+            100)
 
+    # ensure that when we click on a player for the demo he has a picture
+    good_results = closest_players_result[closest_players_result['club_image'].notna() &
+                                          closest_players_result['profile_image'].notna()]
 
-    # Player's own stats for radar features
 
 
     # Create and display radar charts
-    for i, (index, row) in enumerate(closest_players_result[:5].iterrows()):
+    for i, (index, row) in enumerate(good_results[:5].iterrows()):
 
         fig = go.Figure()
 
@@ -269,7 +285,7 @@ if st.checkbox('Start player analysis'):
             st.session_state.selected_player = row['name']
             st.session_state.player_details_data = closest_players_result
             st.session_state.player_details_05 = True
-            nav_page("Player_details")
+            nav_page("Player_profile")
 
 
     st.success('Player analysis done!')
@@ -277,7 +293,10 @@ if st.checkbox('Start player analysis'):
 if st.checkbox('Show Details of Selected Players'):
     if 'closest_players_result' in locals():
         st.markdown("""**Nearest neighbors to the fictive player's statistics**""")
-        st.write(closest_players_result)
+        st.write(closest_players_result[["name_y","club_name",'shooting', 'dribbling_control', 'passing_vision',
+                  'tackling_interception', 'aerial_defense', 'speed_agility',
+                  'strength_stamina', 'decision_making', 'work_ethic_effort',
+                  'leadership', 'teamwork']])
         st.markdown("""**Fictive player's statistics**""")
         st.write(player_stats)
 

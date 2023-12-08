@@ -26,7 +26,7 @@ st.title('Football player profile analyse')
 
 # User inputs
 player_name = st.text_input('Enter a player name:')
-num_neighbors = st.number_input('Number of neighbors:', min_value=1, max_value=20, value=5)
+num_neighbors = st.number_input('Number of players:', min_value=1, max_value=20, value=5)
 
 # Define your find_closest_players function here
 def find_closest_players(player_name, num_neighbors, data, feature_columns):
